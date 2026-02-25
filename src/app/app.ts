@@ -1,202 +1,198 @@
-import { Component, signal, ChangeDetectionStrategy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+
+interface Experience {
+  company: string;
+  role: string;
+  period: string;
+  isLatest?: boolean;
+  achievements: string[];
+}
+
+interface Skill {
+  name: string;
+  level: string;
+  isTech: boolean;
+}
+
+interface SkillCategory {
+  title: string;
+  icon: string;
+  colorClass: string;
+  skills: Skill[];
+}
 
 @Component({
   selector: 'app-root',
   standalone: true,
   imports: [CommonModule],
-  changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
-    <div class="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-indigo-100 selection:text-indigo-700">
-
+    <div class="bg-gray-50 text-slate-900 font-sans selection:bg-indigo-100 selection:text-indigo-700 overflow-x-hidden">
+      
       <!-- Navigation -->
-      <nav class="fixed top-0 w-full z-50 glass-nav border-b border-slate-200">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex justify-between h-16 items-center">
-            <div class="flex items-center space-x-2">
-              <div class="w-10 h-10  rounded-full shadow-lg shadow-indigo-200">
-                <img src="Profile_Photo.jpg" class="rounded-full w-10 h-10 object-cover" alt="" srcset="">
-              </div>
-              <div class="flex flex-col">
-                <span class="text-lg font-bold tracking-tight text-slate-800 leading-none">SACHIN BUDNI</span>
-                <span class="text-[10px] text-indigo-600 font-bold tracking-widest uppercase">Front-End Architect</span>
-              </div>
+      <nav class="fixed top-0 w-full bg-white/90 backdrop-blur-md z-50 border-b border-gray-100 animate-slide-down">
+        <div class="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+          <div class="flex items-center gap-2 group cursor-pointer">
+            <div class="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-xl transition-all duration-500 group-hover:scale-110 group-hover:rotate-6 shadow-lg shadow-indigo-200">SB</div>
+            <div class="hidden sm:block">
+              <h1 class="font-bold text-lg leading-none uppercase transition-colors group-hover:text-indigo-600">Sachin Budni</h1>
+              <p class="text-[10px] text-indigo-600 font-bold tracking-[0.2em]">FRONT-END ARCHITECT</p>
             </div>
-            
-            <!-- Desktop Nav -->
-            <div class="hidden md:flex space-x-8 text-sm font-medium">
-              <a href="#about" class="text-slate-600 hover:text-indigo-600 transition-colors">About</a>
-              <a href="#experience" class="text-slate-600 hover:text-indigo-600 transition-colors">Experience</a>
-              <a href="#skills" class="text-slate-600 hover:text-indigo-600 transition-colors">Skills</a>
-              <a href="mailto:sachinbudnibnt@gmail.com" class="px-5 py-2.5 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition-all shadow-md shadow-indigo-100 font-semibold">Hire Me</a>
+          </div>
+          <div class="flex items-center gap-8">
+            <div class="hidden md:flex gap-8 text-sm font-bold text-gray-500">
+              <a href="#about" class="hover:text-indigo-600 transition-colors relative group/link">
+                About
+                <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-600 transition-all group-hover/link:w-full"></span>
+              </a>
+              <a href="#experience" class="hover:text-indigo-600 transition-colors relative group/link">
+                Experience
+                <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-600 transition-all group-hover/link:w-full"></span>
+              </a>
+              <a href="#skills" class="hover:text-indigo-600 transition-colors relative group/link">
+                Skills
+                <span class="absolute -bottom-1 left-0 w-0 h-0.5 bg-indigo-600 transition-all group-hover/link:w-full"></span>
+              </a>
             </div>
-
-            <!-- Mobile Menu Button -->
-            <div class="md:hidden">
-              <button (click)="toggleMenu()" class="p-2 text-slate-600 hover:bg-slate-100 rounded-lg transition-colors">
-                @if (!isMenuOpen()) {
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg>
-                } @else {
-                  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                }
-              </button>
-            </div>
+            <a href="mailto:sachinbudnibnt@gmail.com" 
+               class="btn-primary bg-indigo-600 text-white px-6 py-2.5 rounded-full text-sm font-bold shadow-lg shadow-indigo-200 flex items-center gap-2 group">
+              Hire Me
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover:translate-x-1 transition-transform"><path d="M5 12h14m-7-7 7 7-7 7"/></svg>
+            </a>
           </div>
         </div>
-
-        <!-- Mobile Menu -->
-        @if (isMenuOpen()) {
-          <div class="md:hidden bg-white border-b border-slate-200 py-6 px-4 space-y-4 animate-in slide-in-from-top duration-300 shadow-xl">
-            <a href="#about" (click)="toggleMenu()" class="block px-4 py-2 text-slate-600 font-medium hover:bg-slate-50 rounded-lg">About</a>
-            <a href="#experience" (click)="toggleMenu()" class="block px-4 py-2 text-slate-600 font-medium hover:bg-slate-50 rounded-lg">Experience</a>
-            <a href="#skills" (click)="toggleMenu()" class="block px-4 py-2 text-slate-600 font-medium hover:bg-slate-50 rounded-lg">Skills</a>
-            <a href="mailto:sachinbudnibnt@gmail.com" (click)="toggleMenu()" class="block px-4 py-3 bg-indigo-600 text-white text-center font-bold rounded-xl shadow-lg">Contact Me</a>
-          </div>
-        }
       </nav>
 
-      <!-- Hero Section & Tech Summary -->
-      <section id="about" class="pt-32 pb-24 px-4 overflow-hidden">
-        <div class="max-w-7xl mx-auto">
-          <div class="grid lg:grid-cols-12 gap-12 items-center">
-            <div class="lg:col-span-7">
-              <div class="inline-flex items-center space-x-2 py-1.5 px-3 rounded-full bg-indigo-50 border border-indigo-100 text-indigo-700 text-xs font-bold tracking-wider uppercase mb-6">
-                <span class="relative flex h-2 w-2">
-                  <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
-                  <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-500"></span>
-                </span>
-                <span>Available for Strategic UI Roles</span>
-              </div>
-              <h1 class="text-5xl md:text-7xl font-extrabold text-slate-900 leading-[1.1] mb-8">
-                Building Enterprise <span class="text-indigo-600">Angular</span> Architectures
-              </h1>
-              <p class="text-xl text-slate-600 mb-10 max-w-2xl leading-relaxed">
-                Senior Front-End professional with <span class="font-bold text-slate-900 underline decoration-indigo-500/30 decoration-4">7+ years of expertise</span>. 
-                I specialize in high-performance Single Page Applications across Healthcare, BFSI, and SaaS domains using the latest Angular features (v4-v18).
-              </p>
-              
-              <div class="flex flex-wrap gap-4 mb-12">
-                <a href="#experience" class="px-8 py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-indigo-600 transition-all shadow-xl hover:-translate-y-1">View Career Timeline</a>
-                <a href="#skills" class="px-8 py-4 bg-white border border-slate-200 text-slate-700 rounded-2xl font-bold hover:border-indigo-600 hover:text-indigo-600 transition-all shadow-sm hover:-translate-y-1">Tech Stack</a>
-              </div>
-              
-              <div class="grid grid-cols-3 gap-6 pt-8 border-t border-slate-200 max-w-lg">
-                 <div>
-                    <p class="text-4xl font-black text-slate-900 leading-none">07</p>
-                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-2">Years of Mastery</p>
-                 </div>
-                 <div>
-                    <p class="text-4xl font-black text-slate-900 leading-none">15+</p>
-                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-2">Versions Handled</p>
-                 </div>
-                 <div>
-                    <p class="text-4xl font-black text-slate-900 leading-none">05</p>
-                    <p class="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-2">Key Domains</p>
-                 </div>
-              </div>
+      <!-- Hero Section -->
+      <section id="about" class="pt-40 pb-24 px-6 relative group/hero">
+        <div class="max-w-7xl mx-auto grid lg:grid-cols-2 gap-16 items-center">
+          <div class="space-y-8 animate-fade-in-up">
+            <div class="inline-flex items-center gap-2 px-3 py-1 bg-indigo-50 text-indigo-600 rounded-full border border-indigo-100 transition-all hover:pl-5">
+              <span class="relative flex h-2 w-2">
+                <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
+                <span class="relative inline-flex rounded-full h-2 w-2 bg-indigo-600"></span>
+              </span>
+              <span class="text-[10px] font-black uppercase tracking-wider">Strategic Front-End Engineering</span>
             </div>
             
-            <!-- Tech Summary Component -->
-            <div class="lg:col-span-5 relative">
-              <div class="absolute -inset-10 bg-indigo-500/5 rounded-full blur-3xl"></div>
-              <div class="relative bg-white p-8 rounded-[2.5rem] shadow-2xl shadow-indigo-100/50 border border-slate-100">
-                <div class="flex items-center justify-between mb-8">
-                  <h3 class="text-xl font-bold text-slate-900 flex items-center">
-                    <svg class="mr-3 text-indigo-600" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-                    Tech Summary
-                  </h3>
-                  <span class="text-[10px] font-black bg-slate-100 text-slate-500 px-2 py-1 rounded">2026 UPDATE</span>
+            <h1 class="text-6xl md:text-7xl font-black leading-[1.1] tracking-tight text-slate-900 overflow-hidden">
+              <span class="block transition-transform duration-700 group-hover/hero:-translate-y-2">Building Enterprise</span>
+              <span class="block bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent transition-transform duration-700 delay-75 group-hover/hero:translate-x-4 italic">Angular</span>
+              <span class="block transition-transform duration-700 delay-150 group-hover/hero:translate-y-2">Architectures</span>
+            </h1>
+            
+            <p class="text-gray-500 text-lg md:text-xl max-w-xl leading-relaxed">
+              Senior professional with <span class="text-slate-900 font-bold border-b-2 border-indigo-200">{{yearsOfExp()}} years of expertise</span>. I specialize in high-performance Single Page Applications across global domains.
+            </p>
+            
+            <div class="flex flex-wrap gap-4 pt-4">
+              <button class="btn-primary bg-slate-900 text-white px-8 py-4 rounded-2xl font-bold shadow-xl shadow-slate-200 group/btn overflow-hidden flex items-center gap-3">
+                <span class="relative z-10">View Case Studies</span>
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="relative z-10 group-hover/btn:translate-x-1 transition-transform"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><line x1="3" x2="21" y1="9" y2="9"/><line x1="9" x2="9" y1="21" y2="9"/></svg>
+                <div class="absolute inset-0 bg-indigo-600 -translate-x-full group-hover/btn:translate-x-0 transition-transform duration-500 ease-out"></div>
+              </button>
+              <button class="btn-secondary border-2 border-gray-200 bg-white text-gray-700 px-8 py-4 rounded-2xl font-bold hover:pl-12 transition-all flex items-center gap-3 group/resume" (click)="downloadResume()">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover/resume:scale-110 transition-transform"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                Download Resume
+              </button>
+            </div>
+
+            <div class="grid grid-cols-3 gap-8 pt-12 border-t border-gray-100">
+              @for (stat of stats(); track stat.label) {
+                <div class="hover:scale-105 transition-transform duration-300 cursor-default hover:text-indigo-600">
+                  <h3 class="text-4xl font-black">{{stat.value}}</h3>
+                  <p class="text-[10px] text-gray-400 font-black uppercase tracking-widest mt-1">{{stat.label}}</p>
                 </div>
-                <div class="space-y-6">
-                  @for (skill of featuredSkills; track skill.name) {
-                    <div class="space-y-2">
-                      <div class="flex justify-between items-center text-sm">
-                        <span class="text-slate-700 font-bold">{{skill.name}}</span>
-                        <span class="text-indigo-600 font-black">{{skill.level}}%</span>
-                      </div>
-                      <div class="w-full h-2.5 bg-slate-100 rounded-full overflow-hidden p-0.5">
-                        <div class="h-full bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full shadow-sm shadow-indigo-200 transition-all duration-1000" [style.width]="skill.level + '%'"></div>
-                      </div>
+              }
+            </div>
+          </div>
+
+          <div class="relative animate-float group/card">
+            <div class="bg-white rounded-[2.5rem] p-10 shadow-2xl shadow-indigo-100 border border-indigo-50 relative z-10 overflow-hidden transition-all duration-700 hover:shadow-indigo-300/40 hover:-translate-y-2">
+              
+              <div class="absolute inset-0 pointer-events-none bg-gradient-to-r from-transparent via-indigo-50/20 to-transparent -translate-x-full group-hover/card:animate-shimmer transition-transform duration-1000"></div>
+              
+              <div class="flex justify-between items-center mb-10 relative z-20 transition-transform group-hover/card:-translate-y-1">
+                <div class="flex items-center gap-3">
+                  <div class="w-3 h-3 rounded-full bg-indigo-500 animate-pulse"></div>
+                  <span class="text-xs font-bold uppercase tracking-[0.2em] text-gray-400">Tech Summary</span>
+                </div>
+                <span class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-2 py-1 rounded border border-indigo-100 animate-pulse-slow">2025 PROFIT</span>
+              </div>
+              
+              <div class="space-y-8 relative z-20">
+                @for (skill of coreTech(); track skill.name; let i = $index) {
+                  <div class="space-y-3 group/bar">
+                    <div class="flex justify-between items-end transition-all duration-500 group-hover/card:translate-x-3">
+                      <span class="text-xs font-black uppercase text-slate-700 group-hover/bar:text-indigo-600 transition-colors">{{skill.name}}</span>
+                      <span class="text-sm font-bold text-indigo-600 animate-counter">{{skill.percentage}}%</span>
                     </div>
-                  }
-                </div>
-                <div class="mt-10 p-5 bg-slate-50 rounded-2xl border border-slate-100">
-                  <p class="text-sm font-medium text-slate-600 leading-relaxed italic">
-                    "Expertise in state management (NgRx/RxJS) and API performance optimization reducing response times for enterprise-grade SPAs."
+                    <div class="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden relative">
+                      <div class="h-full bg-indigo-600 rounded-full animate-grow-stagger shadow-[0_0_10px_rgba(79,70,229,0.3)]"
+                           [style.width.%]="skill.percentage"
+                           [style.animation-delay]="(i * 200) + 500 + 'ms'"></div>
+                      <div class="absolute inset-0 bg-white/40 -translate-x-full group-hover/card:animate-slide-infinite opacity-0 group-hover/card:opacity-100 transition-opacity"></div>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              <div class="mt-12 p-6 bg-slate-900 rounded-[1.5rem] text-white transform transition-all duration-700 translate-y-4 group-hover/card:translate-y-0 relative overflow-hidden group/note">
+                <div class="relative z-10 transition-transform duration-500 group-hover/note:translate-y-[-2px]">
+                  <p class="text-[10px] uppercase font-bold text-indigo-400 mb-2 tracking-widest transition-transform group-hover/note:translate-x-1">Architect Note</p>
+                  <p class="text-sm text-slate-300 leading-relaxed italic group-hover/note:text-white transition-colors">
+                    "Specialized in state management and API performance optimization, reducing response times for high-traffic enterprise solutions."
                   </p>
                 </div>
+                <div class="absolute inset-0 bg-indigo-600/5 translate-y-full group-hover/note:translate-y-0 transition-transform duration-700"></div>
+                <div class="absolute top-0 right-0 w-20 h-20 bg-indigo-500/10 blur-2xl rounded-full"></div>
               </div>
             </div>
+            <div class="absolute -top-12 -right-12 w-64 h-64 bg-indigo-100/60 rounded-full blur-[80px] -z-10 animate-pulse"></div>
+            <div class="absolute -bottom-12 -left-12 w-48 h-48 bg-purple-100/40 rounded-full blur-[60px] -z-10 animate-pulse-slow"></div>
           </div>
         </div>
       </section>
 
-      <!-- Professional Experience Section -->
-      <section id="experience" class="py-24 bg-slate-100/40 border-y border-slate-200">
-        <div class="max-w-6xl mx-auto px-4">
-          <div class="text-center mb-20">
-            <h2 class="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">Professional Experience</h2>
-            <p class="text-slate-500 font-medium">Over 7 years of engineering growth and domain expertise</p>
-            <div class="w-16 h-1.5 bg-indigo-600 mx-auto rounded-full mt-6"></div>
+      <!-- Professional Experience -->
+      <section id="experience" class="py-32 bg-white relative">
+        <div class="max-w-4xl mx-auto px-6">
+          <div class="text-center mb-24 animate-fade-in">
+            <h2 class="text-4xl md:text-5xl font-black mb-4 tracking-tight uppercase">Professional Experience</h2>
+            <div class="w-12 h-1 bg-indigo-600 mx-auto rounded-full"></div>
           </div>
 
           <div class="relative">
-            <!-- Central Line -->
-            <div class="hidden lg:block absolute left-1/2 top-0 bottom-0 w-0.5 bg-slate-200 -translate-x-1/2"></div>
-            
-            <div class="space-y-20 lg:space-y-0">
-              @for (job of experience; track job.id; let first = $first; let last = $last) {
-                <div class="relative lg:h-auto lg:py-10">
-                  <div class="flex flex-col lg:flex-row items-center">
-                    
-                    <!-- Left Side (Content for odd, Date for even) -->
-                    <div class="w-full lg:w-1/2 lg:px-12 mb-6 lg:mb-0" [class]="job.id % 2 !== 0 ? 'lg:text-right lg:order-1' : 'lg:order-2 lg:text-left'">
-                      @if (job.id % 2 !== 0) {
-                        <div class="inline-block px-4 py-1.5 rounded-full bg-indigo-600 text-white text-xs font-bold uppercase tracking-widest mb-4">
-                          {{job.period}}
-                        </div>
-                        <h3 class="text-2xl font-black text-slate-900 mb-1 uppercase tracking-tight">{{job.company}}</h3>
-                        <p class="text-indigo-600 font-bold mb-4">{{job.role}}</p>
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 inline-block w-full text-left">
-                          <ul class="space-y-3">
-                            @for (point of job.highlights; track point) {
-                              <li class="text-slate-600 text-sm flex items-start gap-3">
-                                <span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0"></span>
-                                <span>{{point}}</span>
-                              </li>
-                            }
-                          </ul>
-                        </div>
-                      } @else {
-                        <div class="inline-block px-4 py-1.5 rounded-full bg-slate-900 text-white text-xs font-bold uppercase tracking-widest mb-4">
-                          {{job.period}}
-                        </div>
-                        <h3 class="text-2xl font-black text-slate-900 mb-1 uppercase tracking-tight">{{job.company}}</h3>
-                        <p class="text-indigo-600 font-bold mb-2">{{job.role}}</p>
-                      }
-                    </div>
+            <div class="absolute left-4 md:left-1/2 top-0 bottom-0 w-0.5 bg-gray-100 md:-translate-x-1/2"></div>
 
-                    <!-- Dot -->
-                    <div class="hidden lg:flex absolute left-1/2 -translate-x-1/2 w-10 h-10 rounded-full border-4 border-slate-50 bg-white items-center justify-center z-10 shadow-lg">
-                      <div class="w-4 h-4 rounded-full" [class]="job.id === 1 ? 'bg-indigo-600 animate-pulse' : 'bg-slate-300'"></div>
-                    </div>
+            <div class="space-y-20">
+              @for (job of experience(); track job.company; let i = $index) {
+                <div class="relative flex flex-col md:flex-row gap-8 md:gap-0 animate-fade-in-up group/item" 
+                     [style.animation-delay]="(i * 100) + 'ms'">
+                  
+                  <div class="md:w-1/2 px-12 transition-all duration-500" 
+                       [class]="(i % 2 === 0 ? 'md:text-right md:order-1 group-hover/item:-translate-x-4' : 'md:order-2 group-hover/item:translate-x-4')">
+                    <span class="inline-block px-3 py-1 bg-indigo-600 text-white text-[10px] font-black uppercase tracking-widest rounded mb-3 shadow-md transition-all hover:scale-110">
+                      {{job.period}}
+                    </span>
+                    <h3 class="text-xl font-black text-slate-900 uppercase transition-colors group-hover/item:text-indigo-600">{{job.company}}</h3>
+                    <p class="text-indigo-600 font-bold uppercase text-xs tracking-widest mt-1">{{job.role}}</p>
+                  </div>
 
-                    <!-- Right Side (Date for odd, Content for even) -->
-                    <div class="w-full lg:w-1/2 lg:px-12" [class]="job.id % 2 !== 0 ? 'lg:order-2 lg:text-left' : 'lg:order-1 lg:text-right'">
-                      @if (job.id % 2 === 0) {
-                        <div class="bg-white p-6 rounded-3xl shadow-sm border border-slate-200 inline-block w-full text-left">
-                          <ul class="space-y-3">
-                            @for (point of job.highlights; track point) {
-                              <li class="text-slate-600 text-sm flex items-start gap-3">
-                                <span class="mt-1.5 w-1.5 h-1.5 rounded-full bg-indigo-500 shrink-0"></span>
-                                <span>{{point}}</span>
-                              </li>
-                            }
-                          </ul>
-                        </div>
-                      } @else {
-                        <div class="hidden lg:block h-20"></div>
-                      }
+                  <div class="absolute left-4 md:left-1/2 top-1.5 w-8 h-8 -translate-x-1/2 flex items-center justify-center z-10">
+                    <div class="w-4 h-4 rounded-full border-4 border-white shadow-md bg-indigo-600 transition-all duration-500 group-hover/item:scale-[2] group-hover/item:shadow-indigo-200"></div>
+                  </div>
+
+                  <div class="md:w-1/2 px-12" [class.md:order-2]="i % 2 === 0" [class.md:order-1]="i % 2 !== 0">
+                    <div class="bg-gray-50 p-8 rounded-[2rem] border border-gray-100 transition-all duration-500 hover:bg-white hover:shadow-2xl hover:-translate-y-2 group/card">
+                      <ul class="space-y-4">
+                        @for (point of job.achievements; track point) {
+                          <li class="flex items-start gap-3 text-sm text-gray-500 leading-relaxed group-hover/card:text-gray-700 transition-all group-hover/card:translate-x-1">
+                            <div class="mt-1.5 w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0 group-hover/card:bg-indigo-600 group-hover/card:scale-125 transition-all"></div>
+                            {{point}}
+                          </li>
+                        }
+                      </ul>
                     </div>
                   </div>
                 </div>
@@ -206,226 +202,255 @@ import { CommonModule } from '@angular/common';
         </div>
       </section>
 
-      <!-- Technical Proficiency Section -->
-      <section id="skills" class="py-24 px-4 relative overflow-hidden">
-        <div class="absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-96 h-96 bg-indigo-50 rounded-full blur-3xl opacity-50"></div>
-        <div class="max-w-7xl mx-auto relative">
-          <div class="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
-            <div class="text-left">
-              <h2 class="text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">Technical Proficiency</h2>
-              <p class="text-slate-500 max-w-lg font-medium">A specialized toolkit refined over thousands of development hours and complex project cycles.</p>
+      <!-- Skills Matrix -->
+      <section id="skills" class="py-32 px-6 bg-gray-50">
+        <div class="max-w-7xl mx-auto">
+          <div class="flex flex-col md:flex-row justify-between items-end mb-20 gap-6">
+            <div class="animate-fade-in">
+              <h2 class="text-4xl font-black tracking-tight uppercase mb-2">Technical Proficiency</h2>
+              <p class="text-gray-400 font-bold uppercase tracking-widest text-[10px]">Specialized Tech Stack</p>
             </div>
-            <div class="flex items-center space-x-4 bg-white p-2 rounded-2xl shadow-sm border border-slate-100">
-               <span class="text-xs font-bold text-slate-400 px-3">FILTER BY:</span>
-               <button class="px-4 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-100 transition-all">ALL SKILLS</button>
-               <button class="px-4 py-2 hover:bg-slate-50 text-slate-500 rounded-xl text-xs font-bold transition-all">CORE</button>
+            
+            <!-- All and Tech Filter Buttons -->
+            <div class="flex p-1.5 bg-white rounded-2xl border border-gray-100 shadow-sm transition-all hover:shadow-md">
+              <button (click)="filter.set('all')"
+                [class]="'px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ' + 
+                (filter() === 'all' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 translate-z-10' : 'text-gray-400 hover:text-indigo-600 hover:bg-indigo-50')">
+                All
+              </button>
+              <button (click)="filter.set('tech')"
+                [class]="'px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ' + 
+                (filter() === 'tech' ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-200 translate-z-10' : 'text-gray-400 hover:text-indigo-600 hover:bg-indigo-50')">
+                Tech
+              </button>
             </div>
           </div>
 
-          <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            @for (group of skillGroups; track group.title) {
-              <div class="group p-8 rounded-[2rem] bg-white border border-slate-200 hover:border-indigo-400 hover:shadow-xl hover:shadow-indigo-500/5 transition-all duration-500 flex flex-col h-full">
-                <div class="w-14 h-14 bg-indigo-50 rounded-2xl flex items-center justify-center text-indigo-600 mb-6 group-hover:scale-110 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-500 shadow-sm">
-                  <img [src]="group.icon" alt="">
+          <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            @for (cat of filteredSkills(); track cat.title; let i = $index) {
+              <div class="bg-white p-10 rounded-[2.5rem] border border-gray-100 shadow-sm transition-all duration-500 hover:shadow-2xl hover:-translate-y-3 group animate-fade-in-up"
+                   [style.animation-delay]="(i * 150) + 'ms'">
+                <div class="w-14 h-14 rounded-2xl flex items-center justify-center mb-8 transition-all duration-500 group-hover:bg-indigo-600 group-hover:scale-110 group-hover:rotate-6 shadow-md"
+                     [class]="cat.colorClass">
+                   <div class="w-7 h-7 transition-colors duration-500 group-hover:text-white">
+                    <span
+                      class="block w-full h-full bg-current icon-mask"
+                      [style.--icon-url]="'url(/' + cat.icon + ')'"
+                      aria-hidden="true"></span>
+                   </div>
                 </div>
-                <h3 class="text-xl font-black text-slate-900 mb-6 tracking-tight uppercase">{{group.title}}</h3>
-                <div class="flex flex-wrap gap-2 mt-auto">
-                  @for (skill of group.skills; track skill) {
-                    <span class="px-3 py-1.5 bg-slate-50 text-slate-700 text-[11px] font-bold rounded-xl border border-slate-100 group-hover:border-indigo-100 group-hover:bg-indigo-50/30 transition-colors">
-                      {{skill}}
-                    </span>
+                <h3 class="font-black text-lg mb-8 uppercase tracking-tight group-hover:text-indigo-600 transition-colors">{{cat.title}}</h3>
+                <div class="space-y-6">
+                  @for (skill of cat.skills; track skill.name) {
+                    <div class="space-y-2 group/skill">
+                      <div class="flex justify-between text-[10px] font-black uppercase transition-all group-hover/skill:translate-x-2">
+                        <span class="text-slate-400 group-hover:text-slate-900 transition-colors">{{skill.name}}</span>
+                        <span class="text-indigo-500">{{skill.level}}</span>
+                      </div>
+                      <div class="h-1 w-full bg-gray-50 rounded-full overflow-hidden relative">
+                        <div class="h-full bg-indigo-500 rounded-full group-hover:bg-indigo-700 transition-all duration-700 group-hover:shadow-[0_0_8px_rgba(79,70,229,0.4)]" 
+                             [style.width]="skill.level === 'Expert' ? '100%' : '85%'"></div>
+                        <div class="absolute inset-0 bg-white/30 -translate-x-full group-hover:animate-slide-infinite opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                      </div>
+                    </div>
                   }
                 </div>
               </div>
             }
           </div>
-          
-          <!-- Competencies Grid -->
-          <div class="mt-20 grid md:grid-cols-3 gap-8">
-             <div class="p-8 bg-slate-900 rounded-[2rem] text-white">
-                <h4 class="text-indigo-400 font-black text-xs tracking-widest uppercase mb-4">Core Competency</h4>
-                <p class="text-xl font-bold leading-snug">Front-End Architecture & SPA Development</p>
-             </div>
-             <div class="p-8 bg-indigo-600 rounded-[2rem] text-white">
-                <h4 class="text-indigo-200 font-black text-xs tracking-widest uppercase mb-4">Core Competency</h4>
-                <p class="text-xl font-bold leading-snug">NgRx State Management & RxJS Reactivity</p>
-             </div>
-             <div class="p-8 bg-white border border-slate-200 rounded-[2rem] text-slate-900 shadow-sm">
-                <h4 class="text-indigo-600 font-black text-xs tracking-widest uppercase mb-4">Core Competency</h4>
-                <p class="text-xl font-bold leading-snug">API & Performance Optimization</p>
-             </div>
-          </div>
         </div>
       </section>
 
-      <!-- Contact Section -->
-      <section id="contact" class="py-24 px-4 bg-slate-950 text-white relative overflow-hidden">
-        <div class="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(79,70,229,0.1),transparent)] pointer-events-none"></div>
-        <div class="max-w-5xl mx-auto">
-          <div class="grid md:grid-cols-2 gap-16 items-center">
-            <div>
-              <h2 class="text-5xl font-black mb-8 leading-tight tracking-tight">Ready to collaborate on <span class="text-indigo-500 underline underline-offset-8 decoration-white/20">strategic</span> UI projects?</h2>
-              <p class="text-slate-400 text-lg mb-12 leading-relaxed">
-                Currently looking for senior roles where I can leverage my 7+ years of Angular expertise to build robust, scalable architectures.
-              </p>
-              
-              <div class="space-y-6">
-                <div class="flex items-center space-x-5 group">
-                  <div class="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-xl">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+      <!-- Footer CTA -->
+      <footer class="py-32 px-6 bg-slate-950 text-white relative overflow-hidden group/footer">
+        <div class="max-w-7xl mx-auto relative z-10">
+          <div class="grid lg:grid-cols-2 gap-20 items-center">
+            <div class="animate-fade-in-up">
+              <h2 class="text-5xl md:text-7xl font-black tracking-tight uppercase leading-[1.1] mb-12 overflow-hidden">
+                <span class="block transition-transform duration-700 group-hover/footer:-translate-x-4">Ready to collaborate on</span>
+                <span class="block text-indigo-500 transition-transform duration-700 delay-100 group-hover/footer:translate-x-4">strategic UI projects?</span>
+              </h2>
+              <div class="space-y-8">
+                <a href="mailto:sachinbudnibnt@gmail.com" class="group flex items-center gap-6 w-fit cursor-pointer">
+                  <div class="w-14 h-14 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover:bg-indigo-600 group-hover:rotate-12 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-indigo-500/30">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500 group-hover:text-white transition-colors"><rect width="20" height="16" x="2" y="4" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
                   </div>
-                  <div>
-                    <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest">Email ID</p>
-                    <p class="text-xl font-bold text-slate-100">sachinbudnibnt&#64;gmail.com</p>
+                  <div class="transition-all group-hover:translate-x-4">
+                    <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Email Me</p>
+                    <p class="text-lg font-bold group-hover:text-indigo-400 transition-colors">sachinbudnibnt&#64;gmail.com</p>
                   </div>
-                </div>
-                <div class="flex items-center space-x-5 group">
-                  <div class="w-14 h-14 bg-slate-900 rounded-2xl flex items-center justify-center text-indigo-400 group-hover:bg-indigo-600 group-hover:text-white transition-all shadow-xl">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                </a>
+                <a href="tel:+918951024495" class="group flex items-center gap-6 w-fit cursor-pointer">
+                  <div class="w-14 h-14 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-center transition-all duration-500 group-hover:bg-indigo-600 group-hover:rotate-12 group-hover:scale-110 group-hover:shadow-lg group-hover:shadow-indigo-500/30">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-indigo-500 group-hover:text-white transition-colors"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.8 19.8 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.08 4.18 2 2 0 0 1 4.06 2h3a2 2 0 0 1 2 1.72c.12.9.34 1.79.65 2.64a2 2 0 0 1-.45 2.11L8 9.94a16 16 0 0 0 6.06 6.06l1.47-1.26a2 2 0 0 1 2.11-.45c.85.31 1.74.53 2.64.65A2 2 0 0 1 22 16.92z"/></svg>
                   </div>
-                  <div>
-                    <p class="text-[10px] text-slate-500 font-black uppercase tracking-widest">Direct Line</p>
-                    <p class="text-xl font-bold text-slate-100">+91 8951024495</p>
+                  <div class="transition-all group-hover:translate-x-4">
+                    <p class="text-[10px] font-black uppercase text-slate-500 tracking-widest">Contact Me</p>
+                    <p class="text-lg font-bold group-hover:text-indigo-400 transition-colors">+91 8951024495</p>
                   </div>
-                </div>
+                </a>
               </div>
             </div>
-            
-            <div class="bg-white/5 border border-white/10 p-10 rounded-[3rem] backdrop-blur-md">
-              <div class="text-center">
-                 <div class="w-20 h-20 bg-indigo-600 rounded-full mx-auto flex items-center justify-center text-3xl font-black mb-6">SB</div>
-                 <h3 class="text-2xl font-bold mb-2">Sachin Budni</h3>
-                 <p class="text-slate-500 mb-8 font-medium">Bangalore, India</p>
-                 <div class="flex flex-col gap-4">
-                    <button class="w-full py-4 bg-white text-slate-950 rounded-2xl font-black uppercase tracking-widest text-xs shadow-xl shadow-white/5 hover:bg-indigo-500 hover:text-white transition-all">Download Full Resume</button>
-                    <a href="https://www.linkedin.com/in/sachin-budni-1b4624345/" target="_blank" class="w-full py-4 bg-slate-900 text-white rounded-2xl font-black uppercase tracking-widest text-xs border border-white/5 hover:bg-white hover:text-slate-950 transition-all text-center">LinkedIn Profile</a>
-                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      <!-- Footer -->
-      <footer class="py-12 bg-white px-4 text-center border-t border-slate-100">
-        <div class="flex flex-col items-center gap-4">
-          <div class="flex items-center space-x-2">
-            <div class="w-6 h-6 bg-indigo-600 rounded-md flex items-center justify-center text-white font-bold text-[10px]">S</div>
-            <span class="text-sm font-black text-slate-900 tracking-tighter uppercase">Portfolio 2026</span>
+            <div class="flex justify-center lg:justify-end animate-fade-in-up">
+              <div class="w-full max-w-sm bg-slate-900/40 backdrop-blur-xl border border-slate-800 p-12 rounded-[3.5rem] text-center shadow-2xl transition-all duration-700 hover:shadow-indigo-500/10 hover:border-slate-700 hover:-translate-y-2 group/footer-card">
+                <div class="w-24 h-24 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-full mx-auto mb-8 flex items-center justify-center text-3xl font-black text-white shadow-2xl shadow-indigo-500/20 transition-all duration-500 group-hover/footer-card:scale-110 group-hover/footer-card:rotate-6">SB</div>
+                <h3 class="text-3xl font-black mb-2 uppercase">Sachin Budni</h3>
+                <p class="text-slate-500 text-xs font-bold uppercase tracking-widest mb-10">Bangalore, India</p>
+                
+                <!-- Download Resume & View Portfolio Buttons -->
+                <div class="space-y-4">
+                  <button class="btn-primary w-full bg-white text-slate-950 px-0 transition-all hover:tracking-[0.2em] flex items-center justify-center gap-3">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+                    DOWNLOAD RESUME
+                  </button>
+                  <button class="btn-secondary w-full bg-slate-800 text-slate-400 border-none px-0 transition-all hover:tracking-[0.2em] flex items-center justify-center gap-3 group/port">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="group-hover/port:rotate-45 transition-transform"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>
+                    VIEW PORTFOLIO
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
-          <p class="text-slate-400 text-[11px] font-bold uppercase tracking-[0.2em]">Designed & Built for High Performance Systems</p>
         </div>
       </footer>
+
     </div>
   `,
-  styles: [`
-    @keyframes slide-in-from-top {
-      from { transform: translateY(-10%); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-    .animate-in {
-      animation: slide-in-from-top 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-    :host { scroll-behavior: smooth; }
-  `]
+  styleUrls: [`./app.css`],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class App {
-  isMenuOpen = signal(false);
+  yearsOfExp = signal(7);
+  filter = signal<'all' | 'tech'>('all');
 
-  featuredSkills = [
-    { name: 'Angular Architecture (v4-18)', level: 98 },
-    { name: 'RxJS & Reactive Patterns', level: 94 },
-    { name: 'NgRx State Management', level: 92 },
-    { name: 'Performance Optimization', level: 89 },
-    { name: 'TypeScript & JavaScript', level: 96 }
-  ];
+  stats = signal([
+    { label: 'Years of Exp.', value: '07' },
+    { label: 'Projects Delivered', value: '15+' },
+    { label: 'Key Domains', value: '05' },
+  ]);
 
-  skillGroups = [
-    {
-      title: 'Frameworks',
-      icon: `framework.svg`,
-      skills: ['Angular v4-v18', 'NgRx', 'RxJS', 'Sass/SCSS', 'Tailwind CSS']
-    },
-    {
-      title: 'UI & Design',
-      icon: `ui_design.svg`,
-      skills: ['Angular Material', 'Material UI', 'Bootstrap', 'HTML5/CSS3', 'Cross-Browser Comp.']
-    },
-    {
-      title: 'Development',
-      icon: `development.svg`,
-      skills: ['TypeScript', 'ES6+', 'RESTful APIs', 'Unit Testing', 'CI/CD Pipelines']
-    },
-    {
-      title: 'Management',
-      icon: `management.svg`,
-      skills: ['Git', 'Azure DevOps', 'Jira', 'Agile/Scrum', 'Stakeholder Comm.']
-    }
-  ];
+  coreTech = signal([
+    { name: 'Angular Architecture (v4-v18)', percentage: 95 },
+    { name: 'RxJS & Reactive Patterns', percentage: 92 },
+    { name: 'NgRx State Management', percentage: 88 },
+    { name: 'Performance Optimization', percentage: 90 },
+  ]);
 
-  experience = [
+  experience = signal<Experience[]>([
     {
-      id: 1,
-      period: 'Feb 2025 - Present',
       company: 'BOP Consultant Private',
       role: 'Sr. Software Developer',
-      highlights: [
-        'Architecting Healthcare SPAs using Angular 15+',
-        'Leading NgRx-based state management implementation for enterprise scalability',
-        'Driving performance optimizations and mentoring junior development staff',
-        'Executing complex requirement analysis and sprint planning for high-stakes projects'
+      period: 'Feb 2025 - Present',
+      isLatest: true,
+      achievements: [
+        'Architecting high-scale Angular 15 healthcare platforms with complex data flows.',
+        'Implementing enterprise state management using NgRx and custom RxJS streams.',
+        'Driving technical requirement analysis and mentorship for front-end teams.'
       ]
     },
     {
-      id: 2,
-      period: 'May 2024 - Jan 2025',
       company: 'R Systems International',
       role: 'Sr. Software Developer',
-      highlights: [
-        'Delivered real estate platforms featuring dynamic filtering and data visualization',
-        'Streamlined delivery via Azure DevOps pipelines and Git version control',
-        'Reduced response times significantly through advanced API caching strategies',
-        'Translated complex business requirements into high-fidelity technical deliverables'
+      period: "May 2024 - Jan 2025",
+      achievements: [
+        'Delivered real estate SPA with high-performance dynamic filtering & CRUD ops.',
+        'Reduced load times by 30% through strategic lazy loading and caching.',
+        'Collaborated with stakeholders to translate business needs into technical designs.'
       ]
     },
     {
-      id: 3,
-      period: 'Aug 2022 - May 2024',
       company: 'LTIMindtree Private Limited',
       role: 'Sr. Software Developer',
-      highlights: [
-        'Engineered BFSI retailer management modules using Angular 14+',
-        'Implemented reactive forms for complex financial transaction workflows',
-        'Utilized NgRx and RxJS to improve application maintainability and scalability',
-        'Active participant in Agile ceremonies using Jira and Microsoft Teams'
+      period: "Aug 2022 - May 2024",
+      achievements: [
+        'Built BFSI retailer management modules with robust Reactive Forms.',
+        'Enhanced scalability by implementing modular NgRx architecture.',
+        'Led Agile ceremonies and performed architecture reviews for critical modules.'
       ]
     },
     {
-      id: 4,
-      period: 'Jan 2020 - Aug 2022',
       company: 'IQGateway Private Limited',
       role: 'Sr. Software Developer',
-      highlights: [
-        'Developed high-performance SPAs for Healthcare and Job Portal domains',
-        'Designed responsive UI components using Material UI and Bootstrap',
-        'Maintained scalable application states via robust RxJS/NgRx architectures',
-        'Prioritized feature delivery through direct client communication and analysis'
+      period: 'Jan 2020 - Aug 2022',
+      achievements: [
+        'Delivered Healthcare and Job Portal apps using Angular 12.',
+        'Designed high-fidelity, responsive UIs with Material UI and Bootstrap.',
+        'Maintained complex state consistency across large-scale job portal modules.'
       ]
     },
     {
-      id: 5,
-      period: 'Apr 2018 - Apr 2019',
-      company: 'BizRuntime IT Services',
-      role: 'Software Engineer',
-      highlights: [
-        'Built SaaS applications for Oil & Gas clients using Angular 4/6',
-        'Developed real-time chat, channel, and hashtag modules with dynamic rendering',
-        'Coordinated international project delivery using Slack, Skype, and Redmine'
+      company: 'BizRuntime IT Services Private Limited',
+      role: 'Software Developer',
+      period: 'Jan 2018 - Aug 2019',
+      achievements: [
+        'Developed SaaS-based Angular 4/6 SPA applications for Oil and Gas industry clients.',
+        'Implemented chat, channel, and hashtag modules with dynamic rendering.',
+        'Coordinated with global clients using Slack, Skype, and Redmine for project management and progress tracking.'
       ]
     }
-  ];
+  ]);
 
-  toggleMenu() {
-    this.isMenuOpen.set(!this.isMenuOpen());
+  skillCategories = signal<SkillCategory[]>([
+    {
+      title: 'Frameworks',
+      // icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5"/><path d="m3 17 9 5 9-5"/></svg>',
+      icon: 'frameworks.svg',
+      colorClass: 'bg-indigo-50 text-indigo-600',
+      skills: [
+        { name: 'Angular (v4-v18)', level: 'Expert', isTech: true },
+        { name: 'TypeScript', level: 'Expert', isTech: true },
+        { name: 'JavaScript (ES6+)', level: 'Expert', isTech: true }
+      ]
+    },
+    {
+      title: 'Visual Engineering',
+      // icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/><path d="m15 5 3 3"/></svg>',
+      icon: 'visual-engineering.svg',
+      colorClass: 'bg-purple-50 text-purple-600',
+      skills: [
+        { name: 'SCSS / CSS3', level: 'Expert', isTech: true },
+        { name: 'Material UI / Tailwind', level: 'Advanced', isTech: true },
+        { name: 'Responsive Design', level: 'Expert', isTech: false }
+      ]
+    },
+    {
+      title: 'State & Data',
+      // icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v6c0 1.7 3.6 3 8 3s8-1.3 8-3V5"/><path d="M4 11v6c0 1.7 3.6 3 8 3s8-1.3 8-3v-6"/></svg>',
+      icon: 'state-data.svg',
+      colorClass: 'bg-blue-50 text-blue-600',
+      skills: [
+        { name: 'NgRx / RxJS', level: 'Expert', isTech: true },
+        { name: 'REST API Integration', level: 'Expert', isTech: true },
+        { name: 'Performance Tuning', level: 'Advanced', isTech: true }
+      ]
+    },
+    {
+      title: 'Strategy',
+      // icon: '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/><path d="M12 3v2"/><path d="M21 12h-2"/><path d="M12 21v-2"/><path d="M3 12h2"/></svg>',
+      icon: 'strategy.svg',
+      colorClass: 'bg-emerald-50 text-emerald-600',
+      skills: [
+        { name: 'Agile / Scrum', level: 'Expert', isTech: false },
+        { name: 'Requirement Analysis', level: 'Expert', isTech: false },
+        { name: 'Mentoring', level: 'Advanced', isTech: false }
+      ]
+    }
+  ]);
+
+  filteredSkills = computed(() => {
+    const currentFilter = this.filter();
+    if (currentFilter === 'all') return this.skillCategories();
+
+    return this.skillCategories().map(cat => ({
+      ...cat,
+      skills: cat.skills.filter(s => s.isTech)
+    })).filter(cat => cat.skills.length > 0);
+  });
+  downloadResume() {
+    const link = document.createElement('a');
+    link.href = 'resume.pdf';
+    link.download = 'resume.pdf';
+    link.click();
   }
 }
