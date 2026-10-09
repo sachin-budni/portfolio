@@ -3,6 +3,7 @@ import { gsap } from '../../core/gsap-setup';
 import { MotionService } from '../../core/motion.service';
 import { CORE_TECH, PROFILE, STATS, Stat } from '../../data/portfolio.data';
 import { RevealDirective } from '../../shared/reveal.directive';
+import { Scroll3dDirective } from '../../shared/scroll3d.directive';
 import { TiltDirective } from '../../shared/tilt.directive';
 
 /**
@@ -11,11 +12,11 @@ import { TiltDirective } from '../../shared/tilt.directive';
  */
 @Component({
   selector: 'app-about',
-  imports: [RevealDirective, TiltDirective],
+  imports: [RevealDirective, Scroll3dDirective, TiltDirective],
   template: `
     <section id="about" class="relative px-6 py-32">
       <div class="mx-auto grid max-w-7xl items-center gap-16 lg:grid-cols-2">
-        <div appReveal="slide-left">
+        <div appReveal="slide-left" appScroll3d="tilt" [scroll3dAmount]="0.5">
           <p data-reveal-child class="section-kicker">About</p>
           <h2 data-reveal-child class="section-title mb-8">Engineering front-ends that <span class="gradient-text">scale</span></h2>
           <p data-reveal-child class="mb-12 max-w-xl text-lg leading-relaxed text-slate-400">
@@ -36,7 +37,9 @@ import { TiltDirective } from '../../shared/tilt.directive';
         </div>
 
         <div appReveal="rotate" class="perspective">
-          <div appTilt [tiltMax]="6" class="glass-card relative overflow-hidden rounded-[2.5rem] p-10">
+          <!-- Scroll-scrubbed turntable swing; the tilt card inside adds hover tilt on top. -->
+          <div appScroll3d="swing" class="[transform-style:preserve-3d]">
+          <div appTilt [tiltMax]="12" class="glass-card relative overflow-hidden rounded-[2.5rem] p-10">
             <div class="tilt-glare"></div>
             <div class="tilt-layer mb-10 flex items-center justify-between">
               <div class="flex items-center gap-3">
@@ -65,6 +68,7 @@ import { TiltDirective } from '../../shared/tilt.directive';
               <p class="mb-2 text-[10px] font-bold uppercase tracking-widest text-accent-soft">Architect Note</p>
               <p class="text-sm italic leading-relaxed text-slate-300">"{{ profile.architectNote }}"</p>
             </div>
+          </div>
           </div>
         </div>
       </div>

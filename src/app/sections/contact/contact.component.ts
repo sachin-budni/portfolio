@@ -2,12 +2,13 @@ import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { PROFILE } from '../../data/portfolio.data';
 import { downloadResume } from '../../shared/download';
 import { RevealDirective } from '../../shared/reveal.directive';
+import { Scroll3dDirective } from '../../shared/scroll3d.directive';
 import { TiltDirective } from '../../shared/tilt.directive';
 
 /** Contact / footer CTA — same content as before, with scroll reveals and a tilting profile card. */
 @Component({
   selector: 'app-contact',
-  imports: [RevealDirective, TiltDirective],
+  imports: [RevealDirective, Scroll3dDirective, TiltDirective],
   template: `
     <footer id="contact" class="relative overflow-hidden px-6 py-32">
       <!-- Soft accent glows anchored to the footer. -->
@@ -15,7 +16,7 @@ import { TiltDirective } from '../../shared/tilt.directive';
       <div class="pointer-events-none absolute -right-20 bottom-0 h-80 w-80 rounded-full bg-accent-2/15 blur-[120px]"></div>
 
       <div class="relative z-10 mx-auto grid max-w-7xl items-center gap-20 lg:grid-cols-2">
-        <div appReveal="slide-left">
+        <div appReveal="slide-left" appScroll3d="tilt" [scroll3dAmount]="0.5">
           <h2 class="mb-12 text-5xl font-black uppercase leading-[1.1] tracking-tight text-white md:text-7xl">
             <span data-reveal-child class="block">Ready to collaborate on</span>
             <span data-reveal-child class="gradient-text block">strategic UI projects?</span>
@@ -40,10 +41,16 @@ import { TiltDirective } from '../../shared/tilt.directive';
         </div>
 
         <div appReveal="scale" class="perspective flex justify-center lg:justify-end">
-          <div appTilt class="glass-card relative w-full max-w-sm overflow-hidden rounded-[3.5rem] p-12 text-center">
+          <div appScroll3d="swing" class="w-full max-w-sm [transform-style:preserve-3d]">
+          <div appTilt class="glass-card relative w-full overflow-hidden rounded-[3.5rem] p-12 text-center">
             <div class="tilt-glare"></div>
-            <div class="tilt-layer-deep glow mx-auto mb-8 flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-2 text-3xl font-black text-white">
-              {{ profile.initials }}
+            <!-- Avatar orbited by two CSS 3D gyroscope rings. -->
+            <div class="tilt-layer-deep orbit-avatar relative mx-auto mb-8 h-24 w-24">
+              <span class="orbit-ring" aria-hidden="true"></span>
+              <span class="orbit-ring orbit-ring--b" aria-hidden="true"></span>
+              <div class="glow relative flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-br from-accent to-accent-2 text-3xl font-black text-white">
+                {{ profile.initials }}
+              </div>
             </div>
             <div class="tilt-layer">
               <h3 class="mb-2 text-3xl font-black uppercase text-white">{{ profile.name }}</h3>
@@ -59,6 +66,7 @@ import { TiltDirective } from '../../shared/tilt.directive';
                 </a>
               </div>
             </div>
+          </div>
           </div>
         </div>
       </div>

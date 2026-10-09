@@ -3,6 +3,7 @@ import { gsap } from '../../core/gsap-setup';
 import { MotionService } from '../../core/motion.service';
 import { EXPERIENCE } from '../../data/portfolio.data';
 import { RevealDirective } from '../../shared/reveal.directive';
+import { Scroll3dDirective } from '../../shared/scroll3d.directive';
 
 /**
  * Scroll-driven timeline.
@@ -11,16 +12,17 @@ import { RevealDirective } from '../../shared/reveal.directive';
  *    viewport centre has travelled through the list, so it "draws" as you scroll
  *    (and un-draws when you scroll back up).
  *  - Each entry has its own timeline that fires as it reaches 75% of the
- *    viewport: the dot pops in with a glow pulse → the period/company slides in
- *    from its side → the card slides in from the other side → bullets stagger in.
+ *    viewport: the dot spins in and fires a shock-wave ring → the period/company
+ *    falls forward out of the depth → the card swings open like a door hinged on
+ *    the timeline → bullets flip in one by one.
  */
 @Component({
   selector: 'app-experience',
-  imports: [RevealDirective],
+  imports: [RevealDirective, Scroll3dDirective],
   template: `
     <section id="experience" class="relative px-6 py-32">
       <div class="mx-auto max-w-5xl">
-        <div appReveal class="mb-24 text-center">
+        <div appReveal appScroll3d="tilt" [scroll3dAmount]="0.6" class="mb-24 text-center">
           <p data-reveal-child class="section-kicker">Career</p>
           <h2 data-reveal-child class="section-title">Professional Experience</h2>
         </div>
@@ -29,6 +31,8 @@ import { RevealDirective } from '../../shared/reveal.directive';
           <!-- Static track + scrubbed glowing progress on top of it. -->
           <div class="absolute bottom-0 left-4 top-0 w-0.5 bg-white/10 md:left-1/2 md:-translate-x-1/2"></div>
           <div class="timeline-progress absolute bottom-0 left-4 top-0 w-0.5 origin-top bg-gradient-to-b from-accent via-accent-2 to-accent shadow-[0_0_12px_var(--color-accent)] md:left-1/2 md:-translate-x-1/2"></div>
+          <!-- Comet head riding the tip of the progress line. -->
+          <div class="timeline-head pointer-events-none absolute left-4 top-0 z-20 md:left-1/2" aria-hidden="true"></div>
 
           <div class="space-y-20">
             @for (job of experience; track job.company; let i = $index, even = $even) {
@@ -45,11 +49,12 @@ import { RevealDirective } from '../../shared/reveal.directive';
                 </div>
 
                 <div class="absolute left-4 top-1.5 z-10 flex h-8 w-8 -translate-x-1/2 items-center justify-center md:left-1/2">
+                  <span class="tl-ring absolute inset-0 rounded-full border-2 border-accent opacity-0"></span>
                   <div class="tl-dot h-4 w-4 rounded-full border-4 border-ink bg-accent shadow-[0_0_0_4px_rgba(99,102,241,0.25),0_0_20px_var(--color-accent)]"></div>
                 </div>
 
                 <div class="tl-card pl-12 md:w-1/2 md:px-12" [class]="even ? 'md:order-2' : 'md:order-1'">
-                  <div class="glass-card rounded-[2rem] p-8 transition-transform duration-500 hover:-translate-y-1">
+                  <div class="tl-panel glass-card rounded-[2rem] p-8 transition-transform duration-500 hover:-translate-y-1">
                     <ul class="space-y-4">
                       @for (point of job.achievements; track point) {
                         <li class="tl-point flex items-start gap-3 text-sm leading-relaxed text-slate-400">
@@ -83,15 +88,16 @@ export class ExperienceComponent {
         ctx = gsap.context(() => {
           const reduced = motion.tier() === 'static';
 
-          // 1. Progress line drawn by scroll (scrub = smoothed 0.5s catch-up).
+          // 1. Progress line drawn by scroll (scrub = smoothed 0.5s catch-up),
+          //    with a glowing comet head riding its tip.
+          const line = { trigger: '.timeline', start: 'top 60%', end: 'bottom 60%', scrub: reduced ? true : 0.5 };
+          gsap.fromTo('.timeline-progress', { scaleY: 0 }, { scaleY: 1, ease: 'none', scrollTrigger: line });
+          const timeline = host.querySelector<HTMLElement>('.timeline')!;
           gsap.fromTo(
-            '.timeline-progress',
-            { scaleY: 0 },
-            {
-              scaleY: 1,
-              ease: 'none',
-              scrollTrigger: { trigger: '.timeline', start: 'top 60%', end: 'bottom 60%', scrub: reduced ? true : 0.5 },
-            },
+            '.timeline-head',
+            { y: 0 },
+            // Function value + invalidateOnRefresh: re-measured on resize.
+            { y: () => timeline.offsetHeight, ease: 'none', scrollTrigger: { ...line, invalidateOnRefresh: true } },
           );
 
           // 2. Step-by-step entries.
@@ -107,17 +113,35 @@ export class ExperienceComponent {
               return;
             }
 
-            // Desktop entries alternate sides; on mobile everything enters from the right.
-            // The meta and the card sit on opposite sides, so they converge on the line.
-            const side = item.dataset['side'];
-            const metaX = desktop && side === 'left' ? -60 : 60;
-            const cardX = desktop && side === 'right' ? -60 : 60;
-            tl.from(q('.tl-dot'), { scale: 0, duration: 0.5, ease: 'back.out(3)' })
-              .from(q('.tl-meta'), { x: metaX, opacity: 0, duration: 0.7 }, '-=0.2')
-              .from(q('.tl-card'), { x: cardX, y: 20, opacity: 0, duration: 0.8 }, '-=0.5')
-              .from(q('.tl-point'), { x: -15, opacity: 0, stagger: 0.1, duration: 0.5 }, '-=0.4')
-              // A brief glow pulse on the dot once the step is "complete".
-              .to(q('.tl-dot'), { scale: 1.5, repeat: 1, yoyo: true, duration: 0.25, ease: 'power1.inOut' }, '-=0.3');
+            // Desktop entries alternate sides; on mobile the card is always right of the line.
+            const cardOnRight = !desktop || item.dataset['side'] === 'left';
+            const metaFromLeft = desktop && item.dataset['side'] === 'left';
+
+            tl
+              // Dot spins in, then a shock-wave ring expands from it.
+              .from(q('.tl-dot'), { scale: 0, rotate: 180, duration: 0.6, ease: 'back.out(3)' })
+              .fromTo(q('.tl-ring'), { scale: 0.5, opacity: 1 }, { scale: 4, opacity: 0, duration: 0.9, ease: 'power2.out' }, '<0.2')
+              // Company/period falls forward from deep in the screen, hinged at its top.
+              .from(
+                q('.tl-meta'),
+                { x: metaFromLeft ? -120 : 120, z: -600, rotateX: 75, opacity: 0, transformPerspective: 900, transformOrigin: '50% 0%', duration: 1.1, ease: 'expo.out' },
+                '-=0.7',
+              )
+              // Card swings open like a door hinged on the edge nearest the timeline.
+              .from(
+                q('.tl-panel'),
+                {
+                  rotateY: cardOnRight ? 105 : -105,
+                  transformOrigin: cardOnRight ? '0% 50%' : '100% 50%',
+                  transformPerspective: 1000,
+                  opacity: 0,
+                  duration: 1.3,
+                  ease: 'expo.out',
+                  clearProps: 'transform,transformOrigin',
+                },
+                '-=0.9',
+              )
+              .from(q('.tl-point'), { x: -40, rotateY: 70, opacity: 0, transformPerspective: 600, stagger: 0.1, duration: 0.7, ease: 'expo.out' }, '-=0.8');
           });
         }, host);
       }),

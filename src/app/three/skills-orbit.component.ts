@@ -44,29 +44,33 @@ interface Tile {
   root: Group;
   box: Mesh;
   labels: Label[];
+  /** Extra Y spin, tweened +360° when the tile is hovered. */
+  flip: { value: number };
 }
 
 // Elliptical ring: wide in X so tiles spread across the section, shallow in Z so
 // combined with the ring's X tilt, back tiles sit higher instead of behind front ones.
-const RING_X = 4.4;
-const RING_Z = 3;
+const RING_X = 5;
+const RING_Z = 3.4;
 
 /**
  * Skills as floating 3D tiles.
  *
  * Layout: one rounded glass tile per skill category travels round an elliptical
- * carousel orbit. Tiles keep their icon facing the
- * viewer, bobs on its own sine phase, and is orbited by sprite labels for the
- * individual technologies.
+ * carousel orbit. Each tile keeps its icon facing the viewer, bobs on its own
+ * sine phase, and is orbited by sprite labels for the individual technologies.
  *
- * Interaction: hovering a tile (raycast) scales it up and emits its index so
+ * Entrance: tiles burst out of the centre with an elastic overshoot while the
+ * whole carousel whips round a full extra turn.
+ *
+ * Interaction: hovering a tile (raycast) scales it up, does a full 360° flip, and emits its index so
  * the matching DOM card can highlight. The All/Tech filter shrinks non-tech
  * labels away with a GSAP tween.
  */
 @Component({
   selector: 'app-skills-orbit',
   template: `<canvas #canvas class="block h-full w-full" aria-hidden="true"></canvas>`,
-  host: { class: 'block relative h-[380px] md:h-[480px]' },
+  host: { class: 'block relative h-[420px] md:h-[560px]' },
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SkillsOrbitComponent {
@@ -114,18 +118,20 @@ export class SkillsOrbitComponent {
     const tilt = { x: 0, y: 0 };
     let pointerDirty = false;
     let hoveredIdx = -1;
-    let spin = 0; // carousel angle; tiles are placed on the ellipse from this each frame
+    // Carousel angle and radius multiplier; the entrance tween drives both.
+    const orbit = { spin: -Math.PI * 2, spread: 0 };
 
     const stage = new ThreeStage({
       canvas: this.canvas().nativeElement,
       container: this.host,
       maxDpr: 2,
-      cameraZ: 9,
+      minDpr: 0.75, // shares the frame with the world canvas behind it
+      cameraZ: 10,
       fov: 45,
       onFrame: (t, dt) => {
         const k = 1 - Math.pow(0.92, dt * 60);
         // Carousel spin, paused while the user is inspecting a tile.
-        if (hoveredIdx < 0) spin += dt * 0.25;
+        if (hoveredIdx < 0) orbit.spin += dt * 0.35;
         // Slight tilt of the whole ring towards the pointer.
         ring.rotation.x += (tilt.y * 0.15 + 0.38 - ring.rotation.x) * k; // base tilt lifts back tiles above front ones
 
@@ -137,6 +143,7 @@ export class SkillsOrbitComponent {
           const idx = hit ? this.tiles.findIndex((x) => x.box === hit.object) : -1;
           if (idx !== hoveredIdx) {
             hoveredIdx = idx;
+            if (idx >= 0) gsap.to(this.tiles[idx].flip, { value: '+=' + Math.PI * 2, duration: 1.2, ease: 'power3.out' });
             this.host.style.cursor = idx >= 0 ? 'pointer' : '';
             // Re-enter Angular only for this rare event so the DOM card can react.
             this.zone.run(() => this.hovered.emit(idx));
@@ -145,19 +152,20 @@ export class SkillsOrbitComponent {
 
         this.tiles.forEach((tile, i) => {
           const { root, labels } = tile;
-          // Counter-rotate so the icon face always looks at the camera, plus a gentle wobble.
-          const a = spin + (i / this.tiles.length) * Math.PI * 2;
-          root.position.x = Math.sin(a) * RING_X;
-          root.position.z = Math.cos(a) * RING_Z;
-          root.rotation.y = Math.sin(t * 0.6 + i) * 0.35; // face the viewer, with a gentle wobble
-          root.position.y = Math.sin(t * 0.9 + i * 1.7) * 0.25; // float/bob
-          const target = i === hoveredIdx ? 1.25 : 1;
+          const a = orbit.spin + (i / this.tiles.length) * Math.PI * 2;
+          root.position.x = Math.sin(a) * RING_X * orbit.spread;
+          root.position.z = Math.cos(a) * RING_Z * orbit.spread;
+          // Face the viewer with a strong wobble, plus the hover flip.
+          root.rotation.y = Math.sin(t * 0.6 + i) * 0.5 + tile.flip.value;
+          root.rotation.z = Math.sin(t * 0.4 + i * 2) * 0.12;
+          root.position.y = Math.sin(t * 0.9 + i * 1.7) * 0.45; // float/bob
+          const target = (i === hoveredIdx ? 1.5 : 1) * Math.max(orbit.spread, 0.001);
           root.scale.setScalar(root.scale.x + (target - root.scale.x) * k);
 
           // Labels orbit the tile on a tilted ellipse.
           labels.forEach((label, j) => {
             const a = label.angle + t * 0.5;
-            label.sprite.position.set(Math.cos(a) * 1.55, Math.sin(a * 1.3 + j) * 0.5 - 0.15, Math.sin(a) * 0.9);
+            label.sprite.position.set(Math.cos(a) * 1.9, Math.sin(a * 1.3 + j) * 0.6 - 0.15, Math.sin(a) * 1.1);
           });
         });
       },
@@ -168,8 +176,8 @@ export class SkillsOrbitComponent {
     key.position.set(3, 4, 6);
     stage.scene.add(new AmbientLight(0xffffff, 0.35), key, ring);
 
-    const boxGeo = new RoundedBoxGeometry(1.7, 1.7, 0.32, 4, 0.22);
-    const faceGeo = new PlaneGeometry(1.05, 1.05);
+    const boxGeo = new RoundedBoxGeometry(2.1, 2.1, 0.4, 4, 0.26);
+    const faceGeo = new PlaneGeometry(1.3, 1.3);
 
     this.tiles = this.categories().map((cat, i) => {
       const angle = (i / this.categories().length) * Math.PI * 2;
@@ -190,7 +198,7 @@ export class SkillsOrbitComponent {
       // Icon face — texture filled asynchronously once the SVG is rasterised.
       const faceMat = new MeshBasicMaterial({ transparent: true, opacity: 0 });
       const face = new Mesh(faceGeo, faceMat);
-      face.position.z = 0.17;
+      face.position.z = 0.21;
       loadIconTexture(cat.icon, cat.color).then((tex) => {
         faceMat.map = tex;
         faceMat.needsUpdate = true;
@@ -207,13 +215,13 @@ export class SkillsOrbitComponent {
           opacity: 0.5,
         }),
       );
-      glow.scale.setScalar(4);
+      glow.scale.setScalar(5.5);
       glow.position.z = -0.3;
 
       const labels: Label[] = cat.skills.map((skill, j) => {
         const { texture, aspect } = createLabelTexture(skill.name, cat.color);
         const sprite = new Sprite(new SpriteMaterial({ map: texture, transparent: true, depthWrite: false }));
-        const baseScale = new Vector2(0.32 * aspect, 0.32);
+        const baseScale = new Vector2(0.38 * aspect, 0.38);
         sprite.scale.set(baseScale.x, baseScale.y, 1);
         root.add(sprite);
         return { sprite, isTech: skill.isTech, baseScale, angle: (j / cat.skills.length) * Math.PI * 2 };
@@ -221,8 +229,12 @@ export class SkillsOrbitComponent {
 
       root.add(glow, box, face);
       ring.add(root);
-      return { root, box, labels };
+      return { root, box, labels, flip: { value: 0 } };
     });
+
+    // Entrance: tiles explode outward from the centre while the ring whips round.
+    gsap.to(orbit, { spread: 1, duration: 2.2, ease: 'elastic.out(1, 0.5)' });
+    gsap.to(orbit, { spin: 0, duration: 2.6, ease: 'expo.out' });
 
     // Apply the initial filter state without animating from zero.
     if (this.filter() === 'tech') this.applyFilter(true);
@@ -245,7 +257,11 @@ export class SkillsOrbitComponent {
     return () => {
       this.host.removeEventListener('pointermove', onMove);
       this.host.removeEventListener('pointerleave', onLeave);
-      for (const tile of this.tiles) for (const l of tile.labels) gsap.killTweensOf(l.sprite.scale);
+      gsap.killTweensOf(orbit);
+      for (const tile of this.tiles) {
+        gsap.killTweensOf(tile.flip);
+        for (const l of tile.labels) gsap.killTweensOf(l.sprite.scale);
+      }
       this.tiles = [];
       stage.dispose();
     };

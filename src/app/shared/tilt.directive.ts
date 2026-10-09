@@ -15,13 +15,15 @@ import { MotionService } from '../core/motion.service';
  *  3. The `.tilt-card` CSS (styles.css) consumes those vars with
  *     `perspective` + `transform-style: preserve-3d`; children with
  *     `.tilt-layer` are pushed forward with translateZ for the depth effect.
- *  4. On pointerleave GSAP springs the vars back to 0 with an elastic ease.
+ *  4. A drop shadow (--sx/--sy) is cast opposite the tilt, so the card looks
+ *     lifted off the page by a light above the viewer.
+ *  5. On pointerleave GSAP springs the vars back to 0 with an elastic ease.
  *
  * Disabled entirely on touch / low-power / reduced-motion (MotionService.hoverEffects).
  */
 @Directive({ selector: '[appTilt]', host: { class: 'tilt-card' } })
 export class TiltDirective {
-  readonly tiltMax = input(10);
+  readonly tiltMax = input(18);
 
   private readonly el = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
   private readonly motion = inject(MotionService);
@@ -86,7 +88,7 @@ export class TiltDirective {
       gx: 50,
       gy: 50,
       duration: 1.2,
-      ease: 'elastic.out(1, 0.45)',
+      ease: 'elastic.out(1.1, 0.35)', // overshoots and wobbles back like a sprung panel
       onUpdate: () => this.apply(),
     });
   };
@@ -97,5 +99,8 @@ export class TiltDirective {
     s.setProperty('--ry', `${this.state.ry.toFixed(2)}deg`);
     s.setProperty('--gx', `${this.state.gx.toFixed(1)}%`);
     s.setProperty('--gy', `${this.state.gy.toFixed(1)}%`);
+    // Shadow falls away from the raised edge.
+    s.setProperty('--sx', `${(-this.state.ry * 2).toFixed(1)}px`);
+    s.setProperty('--sy', `${(this.state.rx * 2 + 30).toFixed(1)}px`);
   }
 }

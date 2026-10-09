@@ -17,6 +17,11 @@ export interface StageOptions {
   container: HTMLElement;
   /** Upper bound for devicePixelRatio; lower on 'lite' devices to save fill-rate. */
   maxDpr: number;
+  /**
+   * Floor for adaptive quality (default 1). Soft, glowing content like particles can go
+   * below 1× — rendering at 0.6× is visually near-identical but costs ~1/3 of the pixels.
+   */
+  minDpr?: number;
   fov?: number;
   cameraZ?: number;
   /** Called every rendered frame. `t` = elapsed seconds, `dt` = clamped frame delta. */
@@ -30,8 +35,8 @@ export interface StageOptions {
  *  - DPR is clamped (retina phones would otherwise render 9× the pixels).
  *  - The loop only runs while the canvas is on screen AND the tab is visible,
  *    so off-screen scenes cost zero GPU/CPU.
- *  - Adaptive quality: FPS is sampled every 2s; if it stays below 50 the
- *    pixel ratio is stepped down (to a floor of 1) to get back to 60.
+ *  - Adaptive quality: FPS is sampled every second; if it is below 50 the
+ *    pixel ratio is stepped down (to `minDpr`) to get back to 60.
  *  - dispose() frees every geometry, material, texture and the GL context.
  *
  * Must be constructed outside Angular's zone (callers use NgZone.runOutsideAngular)
@@ -116,10 +121,11 @@ export class ThreeStage {
     this.sampleFrames++;
     const now = performance.now();
     const elapsed = now - this.sampleStart;
-    if (elapsed < 2000) return;
+    if (elapsed < 1000) return;
     const fps = (this.sampleFrames * 1000) / elapsed;
-    if (fps < 50 && this.dpr > 1) {
-      this.dpr = Math.max(1, this.dpr - 0.25);
+    const floor = this.opts.minDpr ?? 1;
+    if (fps < 50 && this.dpr > floor) {
+      this.dpr = Math.max(floor, this.dpr - 0.2);
       this.renderer.setPixelRatio(this.dpr);
       this.resize();
     }

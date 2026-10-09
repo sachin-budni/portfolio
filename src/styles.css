@@ -65,6 +65,43 @@ footer[id] {
   letter-spacing: -0.02em;
   text-transform: uppercase;
   color: #fff;
+  /* Extruded 3D lettering (same stack as .text-3d, slightly shallower). */
+  text-shadow: 0 1px 0 #b5b8fa, 0 2px 0 #8b8ff0, 0 3px 0 #6f73e6, 0 4px 0 #575bd8, 0 8px 14px rgb(99 102 241 / 0.5);
+}
+
+/*
+  Extruded 3D text: a stack of 1px offset shadows, each a darker indigo,
+  reads as solid depth; the last two blurred layers are the glow underneath.
+*/
+.text-3d {
+  /* Solid (unblurred) layers are cheap; only the final glow layer is blurred. */
+  text-shadow:
+    0 1px 0 #d4d6ff, 0 2px 0 #b5b8fa, 0 3px 0 #999df4, 0 4px 0 #7f83ec,
+    0 5px 0 #686ce2, 0 6px 0 #5559d4, 0 7px 0 #4448c2, 0 8px 0 #383bab,
+    0 14px 24px rgb(99 102 241 / 0.55);
+}
+/* Gradient (clipped) text can't take text-shadow: it would show through the
+   transparent fill. drop-shadow filters the rendered glyphs instead. */
+.text-3d .gradient-text,
+.section-title .gradient-text {
+  text-shadow: none;
+  filter: drop-shadow(0 3px 0 #4448c2) drop-shadow(0 6px 0 #2f3190) drop-shadow(0 12px 18px rgb(168 85 247 / 0.5));
+}
+
+/* Hero depth planes (see HeroComponent): each sits at its own Z inside a preserve-3d container. */
+.hero-layer {
+  transform: translateZ(var(--z, 0));
+  transform-style: preserve-3d;
+}
+
+/* Hero letters spring up individually on hover. */
+.hero-char {
+  display: inline-block;
+  transition: transform 0.45s cubic-bezier(0.34, 1.8, 0.64, 1), color 0.3s;
+}
+.hero-char:hover {
+  transform: translateY(-0.18em) rotateX(-35deg) rotateZ(-6deg) scale(1.18);
+  color: var(--color-accent-soft);
 }
 
 /* --- Surfaces & glow ------------------------------------------------------ */
@@ -75,7 +112,8 @@ footer[id] {
 }
 
 .glass-card {
-  background: linear-gradient(160deg, rgb(255 255 255 / 0.06), rgb(255 255 255 / 0.015));
+  /* Near-opaque so the moving 3D world behind never competes with the text. */
+  background: linear-gradient(160deg, rgb(24 24 44 / 0.94), rgb(11 11 20 / 0.94));
   border: 1px solid rgb(255 255 255 / 0.08);
   box-shadow: 0 30px 60px -30px rgb(0 0 0 / 0.8), inset 0 1px 0 rgb(255 255 255 / 0.05);
   transition: border-color 0.4s, box-shadow 0.4s;
@@ -97,6 +135,20 @@ footer[id] {
 .btn-glow:hover {
   box-shadow: 0 0 34px -2px var(--color-accent);
   transform: translateY(-2px);
+}
+
+/* Chunky 3D button: a solid "side" built from box-shadow that compresses when pressed. */
+.btn-3d {
+  box-shadow: 0 6px 0 #3730a3, 0 12px 24px -6px rgb(99 102 241 / 0.6);
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s;
+}
+.btn-3d:hover {
+  transform: translateY(-4px) rotateX(12deg);
+  box-shadow: 0 10px 0 #3730a3, 0 22px 40px -8px rgb(99 102 241 / 0.8);
+}
+.btn-3d:active {
+  transform: translateY(5px);
+  box-shadow: 0 1px 0 #3730a3, 0 6px 12px -4px rgb(99 102 241 / 0.6);
 }
 
 .nav-link::after {
@@ -161,10 +213,18 @@ footer[id] {
   will-change: transform;
 }
 .tilt-layer {
-  transform: translateZ(40px);
+  transform: translateZ(60px);
 }
 .tilt-layer-deep {
-  transform: translateZ(70px);
+  transform: translateZ(110px);
+}
+/* While tilting, the card casts a shadow away from its raised edge (--sx/--sy from TiltDirective). */
+.glass-card.tilt-card.is-tilting {
+  box-shadow:
+    var(--sx, 0) var(--sy, 30px) 60px -20px rgb(0 0 0 / 0.9),
+    0 0 70px -15px var(--tile-color, var(--color-accent)),
+    inset 0 1px 0 rgb(255 255 255 / 0.08);
+  border-color: color-mix(in srgb, var(--tile-color, var(--color-accent)) 60%, transparent);
 }
 /* Glare highlight that follows the cursor. */
 .tilt-glare {
@@ -197,8 +257,59 @@ footer[id] {
   animation-delay: calc(var(--i) * -1.5s);
 }
 @keyframes tile-float {
-  0%, 100% { transform: translateY(0) rotateY(-25deg) rotateX(8deg); }
-  50% { transform: translateY(-14px) rotateY(25deg) rotateX(-8deg); }
+  0%, 100% { transform: translateY(0) rotateY(-40deg) rotateX(14deg); }
+  50% { transform: translateY(-22px) rotateY(40deg) rotateX(-14deg) translateZ(30px); }
+}
+
+/* Gyroscope rings around the contact avatar: two rings on tilted planes spinning in 3D. */
+.orbit-avatar {
+  transform-style: preserve-3d;
+}
+.orbit-ring {
+  position: absolute;
+  inset: -22px;
+  border-radius: 9999px;
+  border: 2px solid rgb(165 180 252 / 0.6);
+  box-shadow: 0 0 18px rgb(99 102 241 / 0.6), inset 0 0 18px rgb(99 102 241 / 0.4);
+  animation: orbit-a 6s linear infinite;
+}
+.orbit-ring--b {
+  inset: -34px;
+  border-color: rgb(216 180 254 / 0.45);
+  animation: orbit-b 9s linear infinite;
+}
+@keyframes orbit-a {
+  from { transform: rotateX(70deg) rotateZ(0deg); }
+  to { transform: rotateX(70deg) rotateZ(360deg); }
+}
+@keyframes orbit-b {
+  from { transform: rotateY(65deg) rotateZ(0deg); }
+  to { transform: rotateY(65deg) rotateZ(-360deg); }
+}
+
+/* Comet head riding the experience timeline. */
+.timeline-head {
+  width: 14px;
+  height: 14px;
+  margin-left: -7px;
+  margin-top: -7px;
+  border-radius: 9999px;
+  background: #fff;
+  box-shadow: 0 0 12px 4px var(--color-accent), 0 0 40px 12px rgb(168 85 247 / 0.6);
+}
+
+/* Cursor spotlight (CursorGlowComponent), behind content, above the WebGL world. */
+.cursor-glow {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 1;
+  width: 640px;
+  height: 640px;
+  border-radius: 9999px;
+  pointer-events: none;
+  background: radial-gradient(circle, rgb(99 102 241 / 0.16), rgb(168 85 247 / 0.06) 40%, transparent 70%);
+  will-change: transform;
 }
 
 /* Icons in /public are single-colour SVGs; masking lets them take any colour. */
@@ -225,7 +336,10 @@ footer[id] {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  .tilt-card {
+  .tilt-card,
+  .hero-layer,
+  .hero-char:hover,
+  .btn-3d:hover {
     transform: none;
   }
 }

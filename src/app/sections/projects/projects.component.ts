@@ -1,31 +1,36 @@
 import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { PROJECTS } from '../../data/portfolio.data';
 import { RevealDirective } from '../../shared/reveal.directive';
+import { Scroll3dDirective } from '../../shared/scroll3d.directive';
 import { TiltDirective } from '../../shared/tilt.directive';
 
 /**
  * Project cards with 3D tilt + depth.
  *
- * The reveal (rotate-in on scroll) lives on a wrapper and the tilt on the inner
- * card, so the GSAP entrance transform and the hover tilt transform never
- * compete for the same element's `transform`.
+ * Three stacked 3D motions, each on its own element so their transforms never collide:
+ *   outer    appReveal="rotate" (untransformed, so ScrollTrigger measures true layout) —
+ *            each card swings in a quarter turn from far away
+ *   grid     appScroll3d="rise" — the whole board tips up from flat as you scroll in
+ *   article  appTilt — hover tilt with glare and a moving shadow
  *
- * Depth: `.tilt-layer` children are pushed 40px towards the viewer and
- * `.tilt-layer-deep` 70px, so while the card rotates they parallax against
+ * Depth: `.tilt-layer` children are pushed 60px towards the viewer and
+ * `.tilt-layer-deep` 110px, so while the card rotates they parallax against
  * the card surface (see styles.css).
  */
 @Component({
   selector: 'app-projects',
-  imports: [RevealDirective, TiltDirective],
+  imports: [RevealDirective, Scroll3dDirective, TiltDirective],
   template: `
     <section id="projects" class="relative px-6 py-32">
       <div class="mx-auto max-w-7xl">
-        <div appReveal class="mb-20">
+        <div appReveal appScroll3d="tilt" [scroll3dAmount]="0.6" class="mb-20">
           <p data-reveal-child class="section-kicker">Selected Work</p>
           <h2 data-reveal-child class="section-title">Projects &amp; Case Studies</h2>
         </div>
 
-        <div appReveal="rotate" [revealStagger]="0.15" class="perspective grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+        <!-- Untransformed wrapper = reliable trigger for both the reveal and the rise. -->
+        <div appReveal="rotate" [revealStagger]="0.15">
+        <div appScroll3d="rise" class="perspective grid gap-8 md:grid-cols-2 lg:grid-cols-3">
           @for (p of projects; track p.title; let i = $index) {
             <div data-reveal-child [class.lg:col-span-2]="i === 0">
               <article appTilt class="glass-card group relative h-full overflow-hidden rounded-[2rem] p-8">
@@ -58,6 +63,7 @@ import { TiltDirective } from '../../shared/tilt.directive';
               </article>
             </div>
           }
+        </div>
         </div>
       </div>
     </section>

@@ -3,6 +3,7 @@ import { refreshScrollTriggers } from '../../core/gsap-setup';
 import { MotionService } from '../../core/motion.service';
 import { SKILL_CATEGORIES } from '../../data/portfolio.data';
 import { RevealDirective } from '../../shared/reveal.directive';
+import { Scroll3dDirective } from '../../shared/scroll3d.directive';
 import { SkillsOrbitComponent } from '../../three/skills-orbit.component';
 
 /**
@@ -15,12 +16,12 @@ import { SkillsOrbitComponent } from '../../three/skills-orbit.component';
  */
 @Component({
   selector: 'app-skills',
-  imports: [RevealDirective, SkillsOrbitComponent],
+  imports: [RevealDirective, Scroll3dDirective, SkillsOrbitComponent],
   template: `
     <section id="skills" class="relative px-6 py-32">
       <div class="mx-auto max-w-7xl">
         <div class="mb-12 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
-          <div appReveal>
+          <div appReveal appScroll3d="tilt" [scroll3dAmount]="0.6">
             <p data-reveal-child class="section-kicker">Specialized Tech Stack</p>
             <h2 data-reveal-child class="section-title">Technical Proficiency</h2>
           </div>
@@ -41,7 +42,7 @@ import { SkillsOrbitComponent } from '../../three/skills-orbit.component';
             @defer (on viewport; prefetch on idle) {
               <app-skills-orbit [categories]="categories" [filter]="filter()" (hovered)="hovered.set($event)" />
             } @placeholder {
-              <div class="skills-placeholder h-[380px] md:h-[480px]"></div>
+              <div class="skills-placeholder h-[420px] md:h-[560px]"></div>
             }
           }
           @case ('lite') {
@@ -56,7 +57,9 @@ import { SkillsOrbitComponent } from '../../three/skills-orbit.component';
           }
         }
 
-        <div appReveal class="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
+        <!-- Reveal on the untransformed wrapper; the rise transform on the grid inside. -->
+        <div appReveal="flip">
+        <div appScroll3d="rise" class="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
           @for (cat of filteredSkills(); track cat.title; let i = $index) {
             <div data-reveal-child
                  class="glass-card group rounded-[2.5rem] p-10 transition-all duration-500 hover:-translate-y-2"
@@ -83,6 +86,7 @@ import { SkillsOrbitComponent } from '../../three/skills-orbit.component';
               </div>
             </div>
           }
+        </div>
         </div>
       </div>
     </section>
